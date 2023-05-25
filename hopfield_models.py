@@ -5,6 +5,7 @@ This repo accompanies Ramsauer et al. (2020) (https://arxiv.org/abs/2008.02217).
 import numpy as np
 from itertools import product
 from tqdm import tqdm
+from scipy.special import softmax
 import math
 
 
@@ -254,17 +255,11 @@ class ContinuousHopfield:
             
         return pat_new
 
-    @staticmethod
     def softmax_unnormalized(z):
-        numerators = np.exp(z) # top
-        denominator = np.sum(numerators) # bottom
-        return numerators/denominator
+        return softmax(z)  # Scipy's softmax is numerically stable
 
-    def softmax_normalized(self,z):
-        #z = z.astype(np.float128)
-        numerators = np.exp(z/self.max_norm) # top
-        denominator = np.sum(numerators) # bottom
-        return numerators/denominator
+    def softmax_normalized(self, z):
+        return softmax(z / self.max_norm)
 
     @staticmethod
     def _lse(z, beta):

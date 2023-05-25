@@ -1,15 +1,15 @@
 
 ### A Generative Model of Memory Construction and Consolidation
 
-Code for modelling consolidation as teacher-student learning, in which initial representations of memories are replayed to train a generative model. This repo contains four notebooks to reproduce the results in the paper:
+Code for modelling consolidation as teacher-student learning, in which initial representations of memories are replayed to train a generative model. This repo contains four notebooks to reproduce the results in the paper.
+
+The modern Hopfield network code is based on https://github.com/ml-jku/hopfield-layers, which accompanies Ramsauer et al. (2020) (https://arxiv.org/abs/2008.02217).
 
 #### Installation
 
-Each notebook installs the dependencies required with pip.
+Each notebook installs the dependencies required with pip. This code was tested on MacOS with Python 3.10.9.
 
-This code was tested on MacOS with Python 3.10.9. 
-
-Note that high values of beta (a parameter affecting recall in the modern Hopfield network) may cause out of memory errors on some computers - if so beta can be reduced but this may affect performance.
+The first notebook also has a Colab option (so local installation is not required). 
 
 #### 1. Consolidation simulation.ipynb
 

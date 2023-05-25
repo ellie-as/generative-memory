@@ -64,7 +64,7 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
 
     # A handful of images fail with OOM errors - exclude these
     if np.isnan(recalled).all():
-        logging.warning("NaN values detected; skipping")
+        logging.warning("NaN values detected; skipping.")
         return None, None
 
     # extract unpredictable image elements from MHN output
@@ -135,7 +135,7 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
         return fig, None
 
 
-def test_extended_model(dataset='shapes3d', vae=None, beta=6, generative_epochs=100, num_ims=1000, latent_dim=10,
+def test_extended_model(dataset='shapes3d', vae=None, beta=20, generative_epochs=100, num_ims=1000, latent_dim=10,
                         threshold=0.01, return_errors_and_counts=False):
     dims = dims_dict[dataset]
 
@@ -143,7 +143,7 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=6, generative_epochs=
                                                                                                       threshold))
 
     if vae is None:
-        net, vae = run_end_to_end(dataset=dataset, generative_epochs=generative_epochs,
+        _, vae = run_end_to_end(dataset=dataset, generative_epochs=generative_epochs,
                                   num=num_ims, latent_dim=latent_dim, kl_weighting=1)
         logging.info("Trained VAE.")
 
@@ -181,12 +181,9 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=6, generative_epochs=
     hpc_traces = np.concatenate((a, pred_labels), axis=1)
     net.learn(hpc_traces[0:50])
 
-    # now visualise recall from a noisy image in the MHN
-    images_masked_np = noise(hpc_traces, noise_factor=0.3, gaussian=True)
-
-    # TEMPORARY CODE
-    print(images_masked_np.shape)
-    images_masked_np = np.random.uniform(-1, 1, size=(100, 12308, 1))
+    # now visualise recall from noise in the MHN
+    len_noise_vec = (64*64*3) + latent_dim
+    images_masked_np = np.random.uniform(-1, 1, size=(100, len_noise_vec, 1))
 
     tests = []
     label_inputs = []
