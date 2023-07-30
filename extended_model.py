@@ -53,9 +53,9 @@ def ims_to_hpc_format(input_ims, vae, threshold, latent_dim, dims=(64, 64, 3), f
 
 
 def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_factor=0.2, threshold=0.005,
-                    return_final_im=False, fixed_latents=None):
+                    return_final_im=False, fixed_latents=None, n=10):
     # get noisy input
-    noisy_data = noise(test_data[0:10], noise_factor=noise_factor, gaussian=False)
+    noisy_data = noise(test_data[0:n], noise_factor=noise_factor, gaussian=False)
 
     # get output of MHN, recalled, for this input
     hpc_traces, latents, to_visualise = ims_to_hpc_format(noisy_data, vae, threshold, latent_dim, dims=dims)
@@ -135,8 +135,7 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
         return fig, None
 
 
-def test_extended_model(dataset='shapes3d', vae=None, beta=20, generative_epochs=100, num_ims=1000, latent_dim=10,
-                        threshold=0.01, return_errors_and_counts=False):
+def test_extended_model(dataset='shapes3d', vae=None, beta=100, generative_epochs=100, num_ims=1000, latent_dim=10, threshold=0.01, return_errors_and_counts=False, n_squares=3, n=100):
     dims = dims_dict[dataset]
 
     pdf = matplotlib.backends.backend_pdf.PdfPages("./hybrid_model/extended_version_{}_{}.pdf".format(dataset,
@@ -152,8 +151,8 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=20, generative_epochs
     test_data, test_labels = shuffle(test_data, test_labels, random_state=0)
 
     # create variant of this dataset with unusual features
-    test_data_squares = [add_multiple_white_squares(d, dims, 3) for d in test_data][0:100]
-    test_data_squares = np.stack(test_data_squares, axis=0).astype("float32")[0:100]
+    test_data_squares = [add_multiple_white_squares(d, dims, n_squares) for d in test_data][0:n]
+    test_data_squares = np.stack(test_data_squares, axis=0).astype("float32")[0:n]
 
     # get reconstructed images and predicted labels for test data
     predictions = get_predictions(test_data_squares, vae)
@@ -173,17 +172,17 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=20, generative_epochs
     _, latents = get_recalled_ims_and_latents(vae, test_data_squares, noise_level=0)
 
     pred_labels = np.array([latents[0][i] for i in range(len(latents[0]))])
-    pred_labels = pred_labels.reshape((100, latent_dim, 1))
+    pred_labels = pred_labels.reshape((n, latent_dim, 1))
 
     # encode traces in MHN
-    a = sparse_to_encode.reshape((100, np.prod(dims), 1))
+    a = sparse_to_encode.reshape((n, np.prod(dims), 1))
 
     hpc_traces = np.concatenate((a, pred_labels), axis=1)
-    net.learn(hpc_traces[0:50])
+    net.learn(hpc_traces[0:n])
 
     # now visualise recall from noise in the MHN
     len_noise_vec = (64*64*3) + latent_dim
-    images_masked_np = np.random.uniform(-1, 1, size=(100, len_noise_vec, 1))
+    images_masked_np = np.random.uniform(-1, 1, size=(n, len_noise_vec, 1))
 
     tests = []
     label_inputs = []
@@ -211,9 +210,9 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=20, generative_epochs
 
     # for the first ten test images, display the stages of recall
     final_outputs = []
-    for test_ind in range(10):
+    for test_ind in range(n):
         fig, final_im = recall_memories(test_data_squares, net, vae, dims, latent_dim, test_ind=test_ind,
-                                        noise_factor=0.1, threshold=threshold, return_final_im=True)
+                                        noise_factor=0.1, threshold=threshold, return_final_im=True, n=n)
 
         if fig is not None:
             pdf.savefig(fig)
@@ -223,18 +222,18 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=20, generative_epochs
 
     if return_errors_and_counts:
         final_outputs = (np.array(final_outputs) + 1)/2
-        errors = np.abs(test_data_squares[0:10] - final_outputs.reshape((10, dims[0], dims[1], dims[2])))
+        errors = np.abs(test_data_squares[0:n] - final_outputs.reshape((n, dims[0], dims[1], dims[2])))
         # Square the errors
         squared_errors = errors ** 2
         # Sum the squared errors for each image
         sum_squared_errors = np.sum(squared_errors, axis=(1, 2, 3))
-        # Compute the mean squared error across the 10 images
+        # Compute the mean squared error across the n images
         mean_error = np.mean(sum_squared_errors)
 
-        pixel_counts = np.where(abs(diff) > threshold, 1, 0)[0:10]
+        pixel_counts = np.where(abs(diff) > threshold, 1, 0)[0:n]
         # Count non-zero elements for each image
         non_zero_counts = np.count_nonzero(pixel_counts, axis=(1, 2, 3))
-        # Compute the average count across the 10 images
+        # Compute the average count across the n images
         mean_pixel_count = np.mean(non_zero_counts)
 
-        return mean_error, mean_pixel_count
+        return mean_error, mean_pixel_count, sum_squared_errors, non_zero_counts
