@@ -1,12 +1,13 @@
-from utils import noise
-import numpy as np
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from PIL import Image, ImageDraw
-import random
-import matplotlib.pyplot as plt
 import hashlib
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+from PIL import Image, ImageDraw
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+
+from utils import noise
 
 
 def get_recalled_ims_and_latents(vae, test_data, noise_level=0):
@@ -29,7 +30,7 @@ def deterministic_seed(image):
 
 def add_white_square(d, dims, seed=0):
     random.seed(deterministic_seed(d))
-    square_size = int(dims[0]/8)
+    square_size = int(dims[0] / 8)
     im1 = Image.fromarray((d * 255).astype("uint8"))
     im2 = Image.fromarray((np.ones((square_size, square_size, 3)) * 255).astype("uint8"))
     Image.Image.paste(im1, im2, (random.randrange(0, dims[0]), random.randrange(0, dims[0])))
@@ -54,7 +55,8 @@ def add_multiple_white_squares(d, dims, n, seed=4321):
         y = random.randrange(0, dims[0] - square_size)
 
         # Blend the white square with the original image using alpha compositing
-        im1[y:y+square_size, x:x+square_size] = blend_images(im2, im1[y:y+square_size, x:x+square_size], transparency).astype("uint8")
+        im1[y:y + square_size, x:x + square_size] = blend_images(im2, im1[y:y + square_size, x:x + square_size],
+                                                                 transparency).astype("uint8")
 
     return (im1 / 255).reshape((dims[0], dims[0], 3))
 
@@ -74,7 +76,6 @@ def get_true_pred_diff(input_data, predictions):
 def display_with_labels(array1, array1_labels, array2, array2_labels, seed=None,
                         title='Inputs and outputs of the model', random_seed=0, n=10,
                         n_labels=10):
-
     dim = array1[0].shape[0]
     # Displays ten random images from each one of the supplied arrays.
     if seed is not None:
@@ -90,7 +91,7 @@ def display_with_labels(array1, array1_labels, array2, array2_labels, seed=None,
     fig = plt.figure(figsize=(20, 4))
     for i, (image1, image2, label1, label2) in enumerate(zip(images1, images2, labels1, labels2)):
         ax = plt.subplot(4, n, i + 1)
-        plt.imshow((image1+1)/2)
+        plt.imshow((image1 + 1) / 2)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -100,7 +101,7 @@ def display_with_labels(array1, array1_labels, array2, array2_labels, seed=None,
         ax.get_yaxis().set_visible(False)
 
         ax = plt.subplot(4, n, i + 1 + 2 * n)
-        plt.imshow((image2+1)/2)
+        plt.imshow((image2 + 1) / 2)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 

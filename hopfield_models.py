@@ -2,11 +2,11 @@
 The code in this file is based on https://github.com/ml-jku/hopfield-layers.
 This repo accompanies Ramsauer et al. (2020) (https://arxiv.org/abs/2008.02217).
 """
+import math
 import numpy as np
 from itertools import product
-from tqdm import tqdm
 from scipy.special import softmax
-import math
+from tqdm import tqdm
 
 
 class ClassicalHopfield:
@@ -42,8 +42,8 @@ class ClassicalHopfield:
             pat_size (int): the dimension d of a single pattern vector
         """
         self.size = pat_size
-        self.W = np.zeros((self.size,self.size))
-        self.b = np.zeros((self.size,1))
+        self.W = np.zeros((self.size, self.size))
+        self.b = np.zeros((self.size, 1))
 
     def learn(self, patterns):
         """learns the weight matrix by applying hebbian learning rule 
@@ -56,16 +56,16 @@ class ClassicalHopfield:
         self.num_pat = len(patterns)
         assert all(type(x) is np.ndarray for x in patterns), 'not all input patterns are numpy arrays'
         assert all(len(x.shape) == 2 for x in patterns), 'not all input patterns have dimension 2'
-        assert all(1 == x.shape[1] for x in patterns) , 'not all input patterns have shape (%d,1)'%self.size
-        
+        assert all(1 == x.shape[1] for x in patterns), 'not all input patterns have shape (%d,1)' % self.size
+
         n = len(patterns)
         W = np.zeros(self.W.shape)
-        
+
         for pat in tqdm(patterns):
-            W += np.outer(pat, pat.T)# w_ij += pat_i * pat_j
-                
+            W += np.outer(pat, pat.T)  # w_ij += pat_i * pat_j
+
         W /= n
-        np.fill_diagonal(W,0)
+        np.fill_diagonal(W, 0)
         self.W = W
         return
 
@@ -84,11 +84,11 @@ class ClassicalHopfield:
 
         for idx_rep in tqdm(range(reps)):
             # synchronous update, aka use old state for all updates 
-            reconst = self.W@test_pat # reconst_i = \sum_j w_ij * partial_pattern_j
-            test_pat = np.where(reconst>self.b, 1, -1)
+            reconst = self.W @ test_pat  # reconst_i = \sum_j w_ij * partial_pattern_j
+            test_pat = np.where(reconst > self.b, 1, -1)
 
         return test_pat
-    
+
     def energy(self, pattern):
         """calculates energy for a pattern according to hopfield model
 
@@ -99,15 +99,16 @@ class ClassicalHopfield:
             float: the calculated energy
         """
         assert type(pattern) is np.ndarray
-        return -0.5 * pattern.T @ self.W @ pattern + self.b.T @pattern 
+        return -0.5 * pattern.T @ self.W @ pattern + self.b.T @ pattern
 
     def energy_landscape(self):
         """print out all vectors of the input space with their energy
         dont use this on larger input space!
         """
-        for pat in product([1,-1], repeat=self.size):
-            print("energy(%r)=%.3f"%(pat, self.energy(np.array(pat))))
+        for pat in product([1, -1], repeat=self.size):
+            print("energy(%r)=%.3f" % (pat, self.energy(np.array(pat))))
         return
+
 
 class DenseHopfield:
     def __init__(self, pat_size, beta=1, normalization_option=1):
@@ -116,12 +117,12 @@ class DenseHopfield:
         self.max_norm = np.sqrt(self.size)
         if normalization_option == 0:
             self.energy = self.energy_unnormalized
-        elif normalization_option == 1: # normalize dot product of patterns by 1/sqrt(pattern_size)
+        elif normalization_option == 1:  # normalize dot product of patterns by 1/sqrt(pattern_size)
             self.energy = self.energy_normalized
-        elif normalization_option == 2: # normalize dot product of patterns by shifting and clamping low exponentials
+        elif normalization_option == 2:  # normalize dot product of patterns by shifting and clamping low exponentials
             self.energy = self.energy_normalized2
         else:
-            raise ValueError('unkown option for normalization: %d'% normalization_option)
+            raise ValueError('unkown option for normalization: %d' % normalization_option)
 
         return
 
@@ -129,24 +130,25 @@ class DenseHopfield:
         """expects patterns as numpy arrays and stores them col-wise in pattern matrix 
         """
         self.num_pat = len(patterns)
-        assert(all(type(x) is np.ndarray for x in patterns)), 'not all input patterns are numpy arrays'
-        assert(all(len(x.shape) == 2 for x in patterns)), 'not all input patterns have dimension 2'
-        assert(all(1 == x.shape[1] for x in patterns)), 'not all input patterns have shape (-1,1) '
-        self.patterns = np.array(patterns).squeeze(axis=-1).T # save patterns col-wise
+        assert (all(type(x) is np.ndarray for x in patterns)), 'not all input patterns are numpy arrays'
+        assert (all(len(x.shape) == 2 for x in patterns)), 'not all input patterns have dimension 2'
+        assert (all(1 == x.shape[1] for x in patterns)), 'not all input patterns have shape (-1,1) '
+        self.patterns = np.array(patterns).squeeze(axis=-1).T  # save patterns col-wise
         # without squeeze axis would result in problem with one pattern
         self.max_pat_norm = max(np.linalg.norm(x) for x in patterns)
 
     def retrieve(self, partial_pattern, max_iter=np.inf, thresh=0.5):
         # partial patterns have to be provided with None/0 at empty spots
         if partial_pattern.size != self.size:
-            raise ValueError("Input pattern %r does not match state size: %d vs %d" 
-                %(partial_pattern, len(partial_pattern), self.size))
-        
+            raise ValueError("Input pattern %r does not match state size: %d vs %d"
+                             % (partial_pattern, len(partial_pattern), self.size))
+
         if None in partial_pattern:
             raise NotImplementedError("None elements not supported")
 
         assert type(partial_pattern) == np.ndarray, 'test pattern was no numpy array'
-        assert len(partial_pattern.shape) <=2 and 1 == partial_pattern.shape[1], 'test pattern with shape %r is not a col-vector' %(partial_pattern.shape,)
+        assert len(partial_pattern.shape) <= 2 and 1 == partial_pattern.shape[
+            1], 'test pattern with shape %r is not a col-vector' % (partial_pattern.shape,)
 
         pat_old = partial_pattern.copy()
         iters = 0
@@ -164,46 +166,46 @@ class DenseHopfield:
                 E += self.energy(pat_old)
 
                 pat_old[jj] = temp
-                pat_new[jj] = np.where(E >0 , 1, -1)
-            
-            if np.count_nonzero(pat_old != pat_new)<= thresh:
+                pat_new[jj] = np.where(E > 0, 1, -1)
+
+            if np.count_nonzero(pat_old != pat_new) <= thresh:
                 break
             else:
                 pat_old = pat_new
-            
+
         return pat_new
 
     @staticmethod
     def _lse(z, beta):
-        return 1/beta * np.log(np.sum(np.exp(beta*z)))
+        return 1 / beta * np.log(np.sum(np.exp(beta * z)))
 
     def energy_unnormalized(self, pattern):
         # return -1*np.exp(self._lse(self.patterns.T @pattern, beta=self.beta))
         # this is equal, but faster
-        return -1*np.sum(np.exp(self.patterns.T @pattern ))
-    
+        return -1 * np.sum(np.exp(self.patterns.T @ pattern))
+
     def energy_normalized(self, pattern):
         # normalize dot product of patterns by 1/sqrt(pattern_size)
-        return -1*np.sum(np.exp((self.patterns.T @pattern)/self.max_norm ))
-    
+        return -1 * np.sum(np.exp((self.patterns.T @ pattern) / self.max_norm))
+
     def energy_normalized2(self, pattern):
         # normalize dot product of patterns by shifting by -sqrt(pattern_size)
         # also clamp exponential for exponents smaller then -73 to 0 
-        exponents = self.patterns.T @pattern
+        exponents = self.patterns.T @ pattern
         norm_exponents = exponents - self.max_pat_norm
         norm_exponents[norm_exponents < -73] = -np.inf
 
-        return -1*np.sum(np.exp(norm_exponents))
+        return -1 * np.sum(np.exp(norm_exponents))
 
-    
     def energy_landscape(self):
-        for pat in product([1,-1], repeat=self.size):
+        for pat in product([1, -1], repeat=self.size):
             pat = np.array(pat)
-            print("energy(%r)=%.3f"%(pat, self.energy(pat)))
+            print("energy(%r)=%.3f" % (pat, self.energy(pat)))
+
 
 class ContinuousHopfield:
     def __init__(self, pat_size, beta=1, do_normalization=True):
-        self.size = pat_size # size of individual pattern
+        self.size = pat_size  # size of individual pattern
         self.beta = beta
         print(self.beta)
         self.max_norm = np.sqrt(self.size)
@@ -213,46 +215,47 @@ class ContinuousHopfield:
         else:
             self.softmax = self.softmax_unnormalized
             self.energy = self.energy_unnormalized
-        
+
         return
 
     def learn(self, patterns):
         """expects patterns as numpy arrays and stores them col-wise in pattern matrix 
         """
         self.num_pat = len(patterns)
-        assert(all(type(x) is np.ndarray for x in patterns)), 'not all input patterns are numpy arrays'
-        assert(all(len(x.shape) == 2 for x in patterns)), 'not all input patterns have dimension 2'
-        assert(all(1 == x.shape[1] for x in patterns)), 'not all input patterns have shape (-1,1) '
-        self.patterns = np.array(patterns).squeeze(axis=-1).T # save patterns col-wise
+        assert (all(type(x) is np.ndarray for x in patterns)), 'not all input patterns are numpy arrays'
+        assert (all(len(x.shape) == 2 for x in patterns)), 'not all input patterns have dimension 2'
+        assert (all(1 == x.shape[1] for x in patterns)), 'not all input patterns have shape (-1,1) '
+        self.patterns = np.array(patterns).squeeze(axis=-1).T  # save patterns col-wise
         # without squeeze axis would result in problem with one pattern
         # return -1*np.sum(np.exp([(self.patterns[:,ii].T @pattern)/self.max_norm for ii in range(self.patterns.shape[1])]))
-        self.M = max(np.linalg.norm(vec) for vec in patterns)# maximal norm of actually stored patterns
+        self.M = max(np.linalg.norm(vec) for vec in patterns)  # maximal norm of actually stored patterns
         return
 
     def retrieve(self, partial_pattern, max_iter=np.inf, thresh=0.5):
         # partial patterns have to be provided with None/0 at empty spots
         if partial_pattern.size != self.size:
-            raise ValueError("Input pattern %r does not match state size: %d vs %d" 
-                %(partial_pattern, len(partial_pattern), self.size))
-        
+            raise ValueError("Input pattern %r does not match state size: %d vs %d"
+                             % (partial_pattern, len(partial_pattern), self.size))
+
         if None in partial_pattern:
             raise NotImplementedError("None elements not supported")
 
         assert type(partial_pattern) == np.ndarray, 'test pattern was not numpy array'
-        assert len(partial_pattern.shape) ==2 and 1 == partial_pattern.shape[1], 'test pattern with shape %r is not a col-vector' %(partial_pattern.shape,)
+        assert len(partial_pattern.shape) == 2 and 1 == partial_pattern.shape[
+            1], 'test pattern with shape %r is not a col-vector' % (partial_pattern.shape,)
 
         pat_old = partial_pattern.copy()
         iters = 0
 
         while iters < max_iter:
-            pat_new = self.patterns @ self.softmax(self.beta*self.patterns.T @ pat_old)
+            pat_new = self.patterns @ self.softmax(self.beta * self.patterns.T @ pat_old)
 
-            if np.count_nonzero(pat_old != pat_new)<= thresh: # converged
+            if np.count_nonzero(pat_old != pat_new) <= thresh:  # converged
                 break
             else:
                 pat_old = pat_new
             iters += 1
-            
+
         return pat_new
 
     def softmax_unnormalized(z):
@@ -263,20 +266,20 @@ class ContinuousHopfield:
 
     @staticmethod
     def _lse(z, beta):
-        return 1/beta * np.log(np.sum(np.exp(beta*z)))
+        return 1 / beta * np.log(np.sum(np.exp(beta * z)))
 
     def energy_unnormalized(self, pattern):
-        return -1*self._lse(self.patterns.T @pattern, 1) + 0.5 * pattern.T @ pattern\
-            + 1/self.beta*np.log(self.num_pat)\
-            + 0.5*self.M**2
-    
+        return -1 * self._lse(self.patterns.T @ pattern, 1) + 0.5 * pattern.T @ pattern \
+            + 1 / self.beta * np.log(self.num_pat) \
+            + 0.5 * self.M ** 2
+
     def energy_normalized(self, pattern):
         # normalize dot product of patterns by 1/sqrt(pattern_size)
-        return -1*self._lse((self.patterns.T @pattern )/self.max_norm, 1) + 0.5 * pattern.T @ pattern\
-            + 1/self.beta*np.log(self.num_pat)\
-            + 0.5*self.M**2
+        return -1 * self._lse((self.patterns.T @ pattern) / self.max_norm, 1) + 0.5 * pattern.T @ pattern \
+            + 1 / self.beta * np.log(self.num_pat) \
+            + 0.5 * self.M ** 2
 
     def energy_landscape(self):
-        for pat in product([1,-1], repeat=self.size):
+        for pat in product([1, -1], repeat=self.size):
             pat = np.array(pat)
-            print("energy(%r)=%.3f"%(pat, self.energy(pat)))
+            print("energy(%r)=%.3f" % (pat, self.energy(pat)))

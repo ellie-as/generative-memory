@@ -1,42 +1,47 @@
-from utils import prepare_data, display
+import matplotlib.backends.backend_pdf
+import numpy as np
+import os
+import pickle
+from random import randrange
+from tensorflow import keras
+from tqdm import tqdm
+
+import hopfield_utils
+from config import dims_dict
 from generative_model import *
 from generative_tests import interpolate_ims, check_generative_recall, plot_history, vector_arithmetic, \
     plot_latent_space_with_labels
-from tensorflow import keras
-import numpy as np
-from random import randrange
-import hopfield_utils
-import matplotlib.backends.backend_pdf
-from config import dims_dict
-from utils import prepare_data
-from tqdm import tqdm
-import os
-import pickle
+from utils import prepare_data, display, get_output_paths
 
 
-def run_end_to_end(dataset='mnist', generative_epochs=10, num=100, latent_dim=5, kl_weighting=1,
+def run_end_to_end(dataset='shapes3d', generative_epochs=10, num=100, latent_dim=5, kl_weighting=1,
                    hopfield_type='continuous', lr=0.001, do_vector_arithmetic=False, interpolate=False, plot_space=True,
                    hopfield_beta=100, use_weights=True):
+    """
+    Runs an end-to-end simulation of consolidation as teacher-student training of a generative network.
 
-    # Paths to write results to:
-    pdf_path = "./outputs/output_{}_{}items_{}eps_{}lv_{}lr_{}kl.pdf".format(dataset,
-                                                                             num,
-                                                                             generative_epochs,
-                                                                             latent_dim,
-                                                                             lr,
-                                                                             kl_weighting)
-    history_path = "./outputs/history_{}_{}items_{}eps_{}lv_{}lr_{}kl.pkl".format(dataset,
-                                                                             num,
-                                                                             generative_epochs,
-                                                                             latent_dim,
-                                                                             lr,
-                                                                             kl_weighting)
-    decoding_path = "./outputs/decoding_{}_{}items_{}eps_{}lv_{}lr_{}kl.pkl".format(dataset,
-                                                                             num,
-                                                                             generative_epochs,
-                                                                             latent_dim,
-                                                                             lr,
-                                                                             kl_weighting)
+    Args:
+        dataset (str, optional): Name of the dataset to use. Defaults to 'shapes3d'.
+        generative_epochs (int, optional): Number of generative epochs. Defaults to 10.
+        num (int, optional): Number of items. Defaults to 100.
+        latent_dim (int, optional): Dimension of the latent variables. Defaults to 5.
+        kl_weighting (int, optional): Weighting for the Kullback-Leibler divergence. Defaults to 1.
+        hopfield_type (str, optional): Type of the Hopfield network. Defaults to 'continuous'.
+        lr (float, optional): Learning rate. Defaults to 0.001.
+        do_vector_arithmetic (bool, optional): Whether to perform vector arithmetic. Defaults to False.
+        interpolate (bool, optional): Whether to perform interpolation. Defaults to False.
+        plot_space (bool, optional): Whether to plot the resulting latent space. Defaults to True.
+        hopfield_beta (int, optional): Beta value for the modern Hopfield network. Defaults to 100.
+        use_weights (bool, optional): Whether to use saved model weights. Defaults to True.
+
+    Returns:
+        net: The modern Hopfield network representing the initial hippocampal network
+        vae: The trained variational autoencoder representing the neocortical generative network
+    """
+
+    # get paths to write results to
+    pdf_path, history_path, decoding_path = get_output_paths(dataset, num, generative_epochs, latent_dim, lr,
+                                                             kl_weighting)
 
     pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_path)
 
@@ -46,7 +51,7 @@ def run_end_to_end(dataset='mnist', generative_epochs=10, num=100, latent_dim=5,
 
     dims = dims_dict[dataset]
 
-    # Load vae for dataset from model_weights directory is use_weights is set to True
+    # load vae for dataset from model_weights directory is use_weights is set to True
     if use_weights is True:
         print("Using existing weights - set use_weights to False to train a new model with the specified parameters")
         encoder, decoder = models_dict[dataset](latent_dim=latent_dim)
@@ -56,8 +61,8 @@ def run_end_to_end(dataset='mnist', generative_epochs=10, num=100, latent_dim=5,
         net = None
 
     else:
-        # Sampling from the MHN takes a while, so use previous run's 'replayed memories' if available
-        # Just delete the 'predictions_*.npy' files to regenerate
+        # sampling from the MHN takes a while, so use previous run's 'replayed memories' if available
+        # just delete the 'predictions_*.npy' files to regenerate
         np_f = './mhn_memories/predictions_{}_{}.npy'.format(dataset, num)
         if os.path.exists(np_f):
             print("Using saved MHN predictions from previous run.")
@@ -96,15 +101,15 @@ def run_end_to_end(dataset='mnist', generative_epochs=10, num=100, latent_dim=5,
                 np.save(fh, predictions)
 
         print("Starting to train VAE.")
-        # Build VAE (large or small version depending on dataset) with latent_dim latent variables
-        encoder, decoder = models_dict[dataset](latent_dim=latent_dim)
+        # build VAE with latent_dim latent variables
+        encoder, decoder = build_encoder_decoder_large(latent_dim=latent_dim)
         vae = VAE(encoder, decoder, kl_weighting)
         # jit_compile set to False to run on MacOS
         opt = keras.optimizers.Adam(lr=lr, amsgrad=True, jit_compile=False)
         vae.compile(optimizer=opt)
         decoding_history = DecodingHistory(dataset)
         history = tf.keras.callbacks.History()
-        # Stop training if no loss improvement for three epochs
+        # stop training if no loss improvement for three epochs
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
         print("Input data shape:", predictions.shape)
         vae.fit(predictions, epochs=generative_epochs, verbose=2, batch_size=32, shuffle=True,
@@ -134,11 +139,11 @@ def run_end_to_end(dataset='mnist', generative_epochs=10, num=100, latent_dim=5,
     if do_vector_arithmetic is True:
         print("Doing vector arithmetic:")
         for i in range(10):
-            # Select a random class
+            # select a random class
             random_class = np.random.choice(range(len(set(train_labels))))
-            # Find the indices of samples belonging to the selected class
+            # find the indices of samples belonging to the selected class
             class_indices = np.where(test_labels == random_class)[0]
-            # Randomly select two indices from the same class
+            # randomly select two indices from the same class
             first, third = np.random.choice(class_indices, size=2, replace=False)
             second = randrange(100)
             print(first, second, third)
@@ -149,10 +154,7 @@ def run_end_to_end(dataset='mnist', generative_epochs=10, num=100, latent_dim=5,
         print("Plotting latent space with labels:")
         fig = plot_latent_space_with_labels(latents, test_labels)
         pdf.savefig(fig)
-        
+
     pdf.close()
 
     return net, vae
-
-        
-    
