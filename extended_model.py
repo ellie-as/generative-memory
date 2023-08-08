@@ -1,11 +1,11 @@
-from extended_model_utils import *
-from end_to_end import *
-import tensorflow as tf
-from hopfield_models import ContinuousHopfield
-from sklearn.utils import shuffle
-import matplotlib.gridspec as gridspec
 import logging
+import matplotlib.gridspec as gridspec
+import tensorflow as tf
+from sklearn.utils import shuffle
 
+from end_to_end import *
+from extended_model_utils import *
+from hopfield_models import ContinuousHopfield
 
 plt.rcParams["figure.figsize"] = (15, 3)
 # set tensorflow random seed to make outputs reproducible
@@ -93,7 +93,7 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
 
     # Plot unpredictable elements of input
     plt.subplot(gs[2])
-    plt.imshow((to_visualise[test_ind] + 1)/2)
+    plt.imshow((to_visualise[test_ind] + 1) / 2)
     plt.axis('off')
 
     # Plot latent vector
@@ -103,7 +103,7 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
 
     # Plot recalled unpredictable elements
     plt.subplot(gs[3])
-    plt.imshow((high_error + 1)/2)
+    plt.imshow((high_error + 1) / 2)
     plt.axis('off')
 
     # Plot recalled latent vector
@@ -124,7 +124,7 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
 
     # Plot final output
     plt.subplot(gs[5])
-    plt.imshow((combined + 1)/2)
+    plt.imshow((combined + 1) / 2)
     plt.axis('off')
 
     plt.show()
@@ -135,7 +135,8 @@ def recall_memories(test_data, net, vae, dims, latent_dim, test_ind=0, noise_fac
         return fig, None
 
 
-def test_extended_model(dataset='shapes3d', vae=None, beta=100, generative_epochs=100, num_ims=1000, latent_dim=10, threshold=0.01, return_errors_and_counts=False, n_squares=3, n=100):
+def test_extended_model(dataset='shapes3d', vae=None, beta=100, generative_epochs=100, num_ims=1000, latent_dim=10,
+                        threshold=0.01, return_errors_and_counts=False, n_squares=3, n=100):
     dims = dims_dict[dataset]
 
     pdf = matplotlib.backends.backend_pdf.PdfPages("./hybrid_model/extended_version_{}_{}.pdf".format(dataset,
@@ -143,7 +144,7 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=100, generative_epoch
 
     if vae is None:
         _, vae = run_end_to_end(dataset=dataset, generative_epochs=generative_epochs,
-                                  num=num_ims, latent_dim=latent_dim, kl_weighting=1)
+                                num=num_ims, latent_dim=latent_dim, kl_weighting=1)
         logging.info("Trained VAE.")
 
     train_data, test_data, noisy_train_data, noisy_test_data, train_labels, test_labels = prepare_data(dataset,
@@ -181,7 +182,7 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=100, generative_epoch
     net.learn(hpc_traces[0:n])
 
     # now visualise recall from noise in the MHN
-    len_noise_vec = (64*64*3) + latent_dim
+    len_noise_vec = (64 * 64 * 3) + latent_dim
     images_masked_np = np.random.uniform(-1, 1, size=(n, len_noise_vec, 1))
 
     tests = []
@@ -221,7 +222,7 @@ def test_extended_model(dataset='shapes3d', vae=None, beta=100, generative_epoch
     pdf.close()
 
     if return_errors_and_counts:
-        final_outputs = (np.array(final_outputs) + 1)/2
+        final_outputs = (np.array(final_outputs) + 1) / 2
         errors = np.abs(test_data_squares[0:n] - final_outputs.reshape((n, dims[0], dims[1], dims[2])))
         # Square the errors
         squared_errors = errors ** 2

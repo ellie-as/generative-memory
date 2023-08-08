@@ -1,18 +1,19 @@
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-import tensorflow.keras.backend as K
-from utils import display
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
+import tensorflow.keras.backend as K
+from tensorflow import keras
+from tensorflow.keras import layers
+
+from utils import display
 
 
 def kl_loss_fn(z_mean, z_log_var, kl_weighting):
     # take the sum across the n latent variables
     # then take the mean across the batch
     kl = K.mean(-0.5 * K.sum(1 + z_log_var \
-                      - K.square(z_mean) \
-                      - K.exp(z_log_var), axis=-1))
+                             - K.square(z_mean) \
+                             - K.exp(z_log_var), axis=-1))
     return kl_weighting * kl
 
 

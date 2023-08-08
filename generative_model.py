@@ -1,13 +1,14 @@
-import tensorflow as tf
-from tensorflow.keras import layers
-import tensorflow.keras.backend as K
-from tensorflow import keras
-from utils import prepare_data
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 import numpy as np
+import tensorflow as tf
+import tensorflow.keras.backend as K
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from tensorflow import keras
+from tensorflow.keras import layers
+
+from utils import prepare_data
 
 
 def label_classifier(latents, labels, num=200):
@@ -34,7 +35,7 @@ class DecodingHistory(keras.callbacks.Callback):
 
 class Sampling(layers.Layer):
     # Uses (z_mean, z_log_var) to sample z, the vector encoding a digit.
-    
+
     def call(self, inputs):
         z_mean, z_log_var = inputs
         batch = tf.shape(z_mean)[0]
@@ -110,8 +111,8 @@ def kl_loss_fn(z_mean, z_log_var, kl_weighting):
     # take the sum across the n latent variables
     # then take the mean across the batch
     kl = K.mean(-0.5 * K.sum(1 + z_log_var \
-                      - K.square(z_mean) \
-                      - K.exp(z_log_var), axis=-1))
+                             - K.square(z_mean) \
+                             - K.exp(z_log_var), axis=-1))
     return kl_weighting * kl
 
 
@@ -168,4 +169,3 @@ class VAE(keras.Model):
 
 
 models_dict = {"shapes3d": build_encoder_decoder_large}
-    

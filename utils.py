@@ -1,10 +1,22 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow_datasets as tfds
 from sklearn.model_selection import train_test_split
+
 from config import dims_dict
 
 DEFAULT_KEY_DICT = {'shapes3d': 'label_shape'}
+
+
+def get_output_paths(dataset, num, generative_epochs, latent_dim, lr, kl_weighting):
+    base_format = "{}_{}items_{}eps_{}lv_{}lr_{}kl"
+    base = base_format.format(dataset, num, generative_epochs, latent_dim, lr, kl_weighting)
+
+    pdf_path = "./outputs/output_" + base + ".pdf"
+    history_path = "./outputs/history_" + base + ".pkl"
+    decoding_path = "./outputs/decoding_" + base + ".pkl"
+
+    return pdf_path, history_path, decoding_path
 
 
 def preprocess(array):
@@ -31,12 +43,12 @@ def noise(array, noise_factor=0.4, seed=None, gaussian=False, replacement_val=0)
 
 def display(array1, array2, seed=None, title='Inputs and outputs of the model', n=10):
     hopfield = False
-    
+
     dim = array1[0].shape[0]
     # Displays ten random images from each one of the supplied arrays.
     if seed is not None:
         np.random.seed(seed)
-        
+
     indices = np.random.randint(len(array1), size=n)
     images1 = array1[indices, :]
     images2 = array2[indices, :]
@@ -58,7 +70,7 @@ def display(array1, array2, seed=None, title='Inputs and outputs of the model', 
             plt.imshow(image2.reshape(dim, dim, 3))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-    
+
     fig.suptitle(title)
     plt.show()
     return fig
@@ -84,10 +96,9 @@ def load_tfds_dataset(dataset, num=15000, labels=False, key_dict=DEFAULT_KEY_DIC
         return train_data, test_data, train_labels, test_labels
     else:
         return train_data, test_data
-    
+
 
 def prepare_data(dataset, display=False, noise_factor=0.6, labels=False):
-
     if labels is True:
         train_data, test_data, train_labels, test_labels = load_tfds_dataset(dataset, labels=True)
     if labels is False:
