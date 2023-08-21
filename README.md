@@ -30,21 +30,26 @@ It then implements the extended model:
 * Examples of recall in the extended version of the model are saved in the 'hybrid_model' folder.
 * The simulation is run at a higher and lower error threshold for encoding.
 
-(See Figures 2, 5a-b, and 5d.)
-
 #### 2. Exploring prototypical distortions.ipynb
 
-This notebook contains code to demonstrate that generative networks such as VAEs make their outputs more prototypical, demonstrated using the MNIST dataset. (See Figures 3a-d.)
+This notebook contains code to demonstrate that generative networks such as VAEs make their outputs more prototypical, demonstrated using the MNIST dataset. 
 
-#### 3. Memory distortions in the hybrid model.ipynb
+#### 3. Memory distortions in the extended model.ipynb
 
 This notebook explores memory distortions in the extended model (using the model trained in '1. Consolidation simulation.ipynb'):
 
 * A plot of error and number of features stored against error threshold for encoding is generated.
 * The Carmichael simulation is run. To model an external conceptual context being encoded, the original image is stored in the modern Hopfield network along with activation of a given concept, represented as the latent variables for that class. 
 
-(See Figure 5c and Figures 6.)
-
 #### 4. Boundary extension and contraction.ipynb
 
-This notebook contains code for exploring boundary extension and contraction in a VAE trained on the Shapes3D dataset. We test boundary extension and contraction in the basic model by giving it a range of artificially 'zoomed in’ or 'zoomed out’ images, adapted from Shapes3D scenes not seen during training, and observing the outputs. The model trained in '1. Consolidation simulation.ipynb' is used. (See Figure 3e.)
+This notebook contains code for exploring boundary extension and contraction in a VAE trained on the Shapes3D dataset. We test boundary extension and contraction in the basic model by giving it a range of artificially 'zoomed in’ or 'zoomed out’ images, adapted from Shapes3D scenes not seen during training, and observing the outputs. The model trained in '1. Consolidation simulation.ipynb' is used. 
+
+#### 5. Imagination continued.ipynb
+
+This notebook contains code for generating examples of particular classes with Monte Carlo sampling.
+
+#### 4. Few-shot learning testing.ipynb
+
+This notebook compares few-shot learning with the latent representations as features to few-shot learning with alternative representations.
+
