@@ -46,8 +46,7 @@ def run_end_to_end(dataset='shapes3d', generative_epochs=10, num=100, latent_dim
     pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_path)
 
     print("Preparing datasets")
-    train_data, test_data, noisy_train_data, noisy_test_data, train_labels, test_labels = prepare_data(dataset,
-                                                                                                       labels=True)
+    train_data, test_data, _, _, train_labels, test_labels = prepare_data(dataset, labels=True)
 
     dims = dims_dict[dataset]
 
