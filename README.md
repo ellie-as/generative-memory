@@ -1,6 +1,8 @@
 
 ### A Generative Model of Memory Construction and Consolidation
 
+Paper: https://www.nature.com/articles/s41562-023-01799-z 
+
 Code for modelling consolidation as teacher-student learning, in which initial representations of memories are replayed to train a generative model. This repo contains four notebooks to reproduce the results in the paper.
 
 The modern Hopfield network code is based on https://github.com/ml-jku/hopfield-layers, which accompanies Ramsauer et al. (2020) (https://arxiv.org/abs/2008.02217).
