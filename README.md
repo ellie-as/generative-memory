@@ -11,7 +11,7 @@ The modern Hopfield network code is based on https://github.com/ml-jku/hopfield-
 
 Each notebook installs the dependencies required with pip. This code was tested on MacOS with Python 3.10.9.
 
-The first notebook also has a Colab option (so local installation is not required): https://colab.research.google.com/github/ellie-as/generative-memory/blob/main/1.%20Consolidation%20simulation.ipynb 
+(Note that the previous Colab link has been removed, as Colab no longer supports the version of Python required to exactly reproduce the results.)
 
 #### 1. Consolidation simulation.ipynb
 
